@@ -1,7 +1,7 @@
-let APP_ID = 'de0d129457e440859729bee5639ba096'
+let APP_ID = "de0d129457e440859729bee5639ba096";
 
-let token = null
-let uid =String(Math.floor(Math.random()* 10000)) 
+let token = null;
+let uid = String(Math.floor(Math.random() * 10000));
 
 let client;
 let channel;
@@ -18,55 +18,103 @@ const servers = {
 };
 
 const init = async () => {
-    client = await AgoraRTM.createInstance(APP_ID)
-    await client.login({uid,token})
+  client = await AgoraRTM.createInstance(APP_ID);
+  await client.login({ uid, token });
 
-    channel = client.createChannel('main')
-    await channel.join()
+  channel = client.createChannel("main");
+  await channel.join();
 
-
-    channel.on('MemberJoined', handleUserJoined)
-    client.on('MessageFromPeer', handleMessageFromPeer)
+  channel.on("MemberJoined", handleUserJoined);
+  client.on("MessageFromPeer", handleMessageFromPeer);
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
-    audio: true,
+    audio: false,
   });
   document.getElementById("user-1").srcObject = localStream;
-
 };
-let handleMessageFromPeer = async (message, MemberId)=>{
-    message = JSON.parse(message.text)
-    console.log('Message:', message)
-}
+let handleMessageFromPeer = async (message, MemberId) => {
+  message = JSON.parse(message.text);
+  if (message.type === "offer") {
+    createAnswer(MemberId, message.offer);
+  }
+  if (message.type === "answer") {
+    addAnswer(message.answer);
+  }
+  if (message.type === "candidate") {
+    if (peerConnection) {
+      peerConnection.addIceCandidate(message.candidate);
+    }
+  }
+};
 
-let handleUserJoined = async(MemberId)=>{
-console.log('New joined:', MemberId)
-createOffer(MemberId);
-}
+let handleUserJoined = async (MemberId) => {
+  console.log("New joined:", MemberId);
+  createOffer(MemberId);
+};
 
-const createOffer = async (MemberId) => {
+let createPeerConnection = async (MemberId) => {
   peerConnection = new RTCPeerConnection(servers);
   remoteStream = new MediaStream();
   document.getElementById("user-2").srcObject = remoteStream;
 
-  localStream.getTracks().forEach((track)=>{
-    peerConnection.addTrack(track,localStream)
-  })
-  peerConnection.ontrack = (event)=>{
-    event.streams[0].getTracks().forEach((track)=>{
-        remoteStream.addTrack(track)
-    })
+  if (!localStream) {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false,
+    });
+    document.getElementById("user-1").srcObject = localStream;
   }
 
-  peerConnection.onicecandidate = async (event)=>{
-    if(event.candidate){
-        console.log('New ice candidate:', event.candidate)
+  localStream.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, localStream);
+  });
+  peerConnection.ontrack = (event) => {
+    event.streams[0].getTracks().forEach((track) => {
+      remoteStream.addTrack(track);
+    });
+  };
+
+  peerConnection.onicecandidate = async (event) => {
+    if (event.candidate) {
+      client.sendMessageToPeer(
+        {
+          text: JSON.stringify({
+            type: "candidate",
+            candidate: event.candidate,
+          }),
+        },
+        MemberId
+      );
     }
-  }
+  };
+};
 
+const createOffer = async (MemberId) => {
+  await createPeerConnection(MemberId);
   let offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
-  client.sendMessageToPeer({text:JSON.stringify({'type':'offer','offer':offer})}, MemberId)
+  client.sendMessageToPeer(
+    { text: JSON.stringify({ type: "offer", offer: offer }) },
+    MemberId
+  );
+};
+
+let createAnswer = async (MemberId, offer) => {
+  await createPeerConnection(MemberId);
+  await peerConnection.setRemoteDescription(offer);
+
+  let answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  client.sendMessageToPeer(
+    { text: JSON.stringify({ type: "answer", answer: answer }) },
+    MemberId
+  );
+};
+
+let addAnswer = async (answer) => {
+  if (!peerConnection.currentRemoteDescription) {
+    peerConnection.setRemoteDescription(answer);
+  }
 };
 
 init();
