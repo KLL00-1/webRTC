@@ -28,7 +28,7 @@ const init = async () => {
   client.on("MessageFromPeer", handleMessageFromPeer);
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
-    audio: false,
+    audio: true,
   });
   document.getElementById("user-1").srcObject = localStream;
 };
@@ -60,7 +60,7 @@ let createPeerConnection = async (MemberId) => {
   if (!localStream) {
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
-      audio: false,
+      audio: true,
     });
     document.getElementById("user-1").srcObject = localStream;
   }
