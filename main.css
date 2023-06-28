@@ -1,0 +1,18 @@
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    gap: 30px;
+}
+
+
+#user-1, #user-2{
+   border-radius: 50%;
+   text-align: center;
+   width: 600px;
+   height: 600px;
+   background-color: black;
+   border:  10px solid blue;
+   box-shadow: 0 0 20px green;
+}
