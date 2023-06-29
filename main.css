@@ -16,6 +16,9 @@ body {
   border: 10px solid blue;
   box-shadow: 0 0 20px green;
 }
+#user-2{
+    display: none;
+}
 
 @media (max-width: 880px) {
   body {
