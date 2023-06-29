@@ -1,19 +1,29 @@
-body{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    gap: 30px;
-    background-color: rgb(27, 24, 24);
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  gap: 30px;
+  background-color: rgb(27, 24, 24);
 }
 
+#user-1,
+#user-2 {
+  text-align: center;
+  width: 45vw;
+  height: 600px;
+  background-color: black;
+  border: 10px solid blue;
+  box-shadow: 0 0 20px green;
+}
 
-#user-1, #user-2{
-   border-radius: 50%;
-   text-align: center;
-   width: 600px;
-   height: 600px;
-   background-color: black;
-   border:  10px solid blue;
-   box-shadow: 0 0 20px green;
+@media (max-width: 880px) {
+  body {
+    flex-direction: column;
+  }
+  #user-1,
+  #user-2 {
+    height: 300px;
+    width: 100vw;
+  }
 }
